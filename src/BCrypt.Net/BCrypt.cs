@@ -582,7 +582,7 @@ namespace BCrypt.Net
 
             // Determine the starting offset and validate the salt
             int startingOffset;
-            char bcryptMinorRevision = (char)0;
+            char bcryptMinorRevision = '0';
             if (salt[0] != '$' || salt[1] != '2')
             {
                 throw new SaltParseException("Invalid salt version");
@@ -608,7 +608,7 @@ namespace BCrypt.Net
             }
 
             // Extract details from salt
-            int workFactor = Convert.ToInt16(salt.Substring(startingOffset, 2));
+            int workFactor = int.Parse(salt.Substring(startingOffset, 2));
 
             // Throw if log rounds are out of range on hash, deals with custom salts
             if (workFactor < 1 || workFactor > 31)
@@ -628,20 +628,37 @@ namespace BCrypt.Net
             {
                 inputBytes = SafeUTF8.GetBytes(inputKey + (bcryptMinorRevision >= 'a' ? Nul : EmptyString));
             }
-
+#if HAS_SPAN_RNG
+            Span<byte> saltBytes = stackalloc byte[BCryptSaltLen];
+            Base64.DecodeBase64(extractedSalt, BCryptSaltLen, saltBytes);
+#else
             byte[] saltBytes = Base64.DecodeBase64(extractedSalt, BCryptSaltLen);
-
+#endif
             BCrypt bCrypt = new BCrypt();
 
             byte[] hashed = bCrypt.CryptRaw(inputBytes, saltBytes, workFactor);
 
             // Generate result string
+#if HAS_SPAN_RNG
+            Span<char> hashBuffer = stackalloc char[60];
+            var pos = 0;
+            hashBuffer[pos++] = '$';
+            hashBuffer[pos++] = '2';
+            hashBuffer[pos++] = bcryptMinorRevision;
+            hashBuffer[pos++] = '$';
+            hashBuffer[pos++] = (char)((workFactor / 10) + '0');
+            hashBuffer[pos++] = (char)((workFactor % 10) + '0');
+            hashBuffer[pos++] = '$';
+            Base64.Encode(saltBytes, saltBytes.Length, hashBuffer, pos);
+            Base64.Encode(hashed, (BfCryptCiphertext.Length * 4) - 1, hashBuffer, 29);
+            return new string(hashBuffer);
+#else
             var result = new StringBuilder(60);
             result.Append("$2").Append(bcryptMinorRevision).Append('$').Append(workFactor.ToString("D2")).Append('$');
             result.Append(Base64.Encode(saltBytes, saltBytes.Length));
             result.Append(Base64.Encode(hashed, (BfCryptCiphertext.Length * 4) - 1));
-
             return result.ToString();
+#endif
         }
 
         /// <summary>

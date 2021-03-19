@@ -8,7 +8,7 @@ namespace BCrypt.Net.Benchmarks
     {
         static void Main(string[] args)
         {
-            //BenchmarkRunner.Run<TestBcrypt_Hashing>();
+            BenchmarkRunner.Run<TestBcrypt_Hashing>();
             //BenchmarkRunner.Run<TestBcrypt_Hashing_Enhanced>();
 
             // Tests for testing in isolation
@@ -16,7 +16,7 @@ namespace BCrypt.Net.Benchmarks
             //BenchmarkRunner.Run<TestB64Decoder>();
             //BenchmarkRunner.Run<TestB64Encoder>();
             //BenchmarkRunner.Run<TestVariantsOnStringBuilding>();
-            BenchmarkRunner.Run<TestBcrypt_Salting>();
+            //BenchmarkRunner.Run<TestBcrypt_Salting>();
 
             Console.WriteLine("Finished");
             Console.ReadLine();
