@@ -729,9 +729,13 @@ namespace BCrypt.Net
                 throw new ArgumentException("BCrypt Revision should be a, b, x or y", nameof(bcryptMinorRevision));
             }
 
+#if HAS_SPAN_RNG
+            Span<byte> saltBytes = stackalloc byte[BCryptSaltLen];
+            RandomNumberGenerator.Fill(saltBytes);
+#else
             byte[] saltBytes = new byte[BCryptSaltLen];
-
             RngCsp.GetBytes(saltBytes);
+#endif
 
             var result = new StringBuilder(29);
             result.Append("$2").Append(bcryptMinorRevision).Append('$').Append(workFactor.ToString("D2")).Append('$');
@@ -841,7 +845,11 @@ namespace BCrypt.Net
         /// <param name="byteArray">The byte array to encode.</param>
         /// <param name="length">   The number of bytes to encode.</param>
         /// <returns>Base64-encoded string.</returns>
+#if HAS_SPAN
+        private static char[] EncodeBase64(Span<byte> byteArray, int length)
+#else
         private static char[] EncodeBase64(byte[] byteArray, int length)
+#endif
         {
             if (length <= 0 || length > byteArray.Length)
             {
