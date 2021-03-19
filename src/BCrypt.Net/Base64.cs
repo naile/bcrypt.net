@@ -18,7 +18,7 @@ namespace BCrypt.Net
         /// <param name="outBuffer">The output buffer</param>
         /// <param name="pos">position in outBuffer to start writing from</param>
         /// <returns>Base64-encoded string.</returns>
-        public static void EncodeBase64(Span<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
+        public static void Encode(Span<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
         {
             WriteToBuffer(byteArray, length, outBuffer, pos);
         }
@@ -33,7 +33,7 @@ namespace BCrypt.Net
         /// <param name="byteArray">The byte array to encode.</param>
         /// <param name="length">   The number of bytes to encode.</param>
         /// <returns>Base64-encoded string.</returns>
-        public static char[] EncodeBase64(byte[] byteArray, int length)
+        public static char[] Encode(byte[] byteArray, int length)
         {
             int encodedSize = (int)Math.Ceiling((length * 4D) / 3);
             char[] encoded = new char[encodedSize];

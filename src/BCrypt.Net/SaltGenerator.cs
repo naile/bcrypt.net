@@ -50,7 +50,7 @@ namespace BCrypt.Net
             RngCsp.GetBytes(saltBytes);
             var result = new StringBuilder(29);
             result.Append("$2").Append(bcryptMinorRevision).Append('$').Append(workFactor.ToString("D2")).Append('$');
-            result.Append(Base64.EncodeBase64(saltBytes, saltBytes.Length));
+            result.Append(Base64.Encode(saltBytes, saltBytes.Length));
 
             return result.ToString();
 #endif
@@ -61,7 +61,7 @@ namespace BCrypt.Net
         {
             Span<byte> saltBytes = stackalloc byte[BCrypt.BCryptSaltLen];
             RandomNumberGenerator.Fill(saltBytes);
-            Base64.EncodeBase64(saltBytes, saltBytes.Length, outBuffer, pos);
+            Base64.Encode(saltBytes, saltBytes.Length, outBuffer, pos);
         }
 #endif
     }

@@ -638,8 +638,8 @@ namespace BCrypt.Net
             // Generate result string
             var result = new StringBuilder(60);
             result.Append("$2").Append(bcryptMinorRevision).Append('$').Append(workFactor.ToString("D2")).Append('$');
-            result.Append(Base64.EncodeBase64(saltBytes, saltBytes.Length));
-            result.Append(Base64.EncodeBase64(hashed, (BfCryptCiphertext.Length * 4) - 1));
+            result.Append(Base64.Encode(saltBytes, saltBytes.Length));
+            result.Append(Base64.Encode(hashed, (BfCryptCiphertext.Length * 4) - 1));
 
             return result.ToString();
         }
