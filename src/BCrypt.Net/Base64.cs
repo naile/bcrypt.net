@@ -18,7 +18,7 @@ namespace BCrypt.Net
         /// <param name="outBuffer">The output buffer</param>
         /// <param name="pos">position in outBuffer to start writing from</param>
         /// <returns>Base64-encoded string.</returns>
-        public static void Encode(Span<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
+        public static void Encode(ReadOnlySpan<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
         {
             WriteToBuffer(byteArray, length, outBuffer, pos);
         }
@@ -44,7 +44,7 @@ namespace BCrypt.Net
         }
 
 #if HAS_SPAN
-        private static void WriteToBuffer(Span<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
+        private static void WriteToBuffer(ReadOnlySpan<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
 #else
         private static void WriteToBuffer(byte[] byteArray, int length, char[] outBuffer, int pos = 0)
 #endif
@@ -82,7 +82,14 @@ namespace BCrypt.Net
                 outBuffer[pos++] = Base64Code[c2 & 0x3f];
             }
         }
-
+#if HAS_SPAN_RNG
+        public static byte[] DecodeBase64(string encodedString, int maximumBytes)
+        {
+            Span<byte> bytes = stackalloc byte[maximumBytes];
+            DecodeBase64(encodedString, maximumBytes, bytes);
+            return bytes.ToArray();
+        }
+#endif
         /// <summary>
         ///  Decode a string encoded using BCrypt's base64 scheme to a byte array.
         ///  Note that this is *not* compatible with the standard MIME-base64 encoding.
@@ -92,7 +99,11 @@ namespace BCrypt.Net
         /// <param name="encodedString">The string to decode.</param>
         /// <param name="maximumBytes"> The maximum bytes to decode.</param>
         /// <returns>The decoded byte array.</returns>
+#if HAS_SPAN_RNG
+        public static void DecodeBase64(string encodedString, int maximumBytes, Span<byte> outBuffer)
+#else
         public static byte[] DecodeBase64(string encodedString, int maximumBytes)
+#endif
         {
             int sourceLength = encodedString.Length;
             int outputLength = 0;
@@ -101,9 +112,11 @@ namespace BCrypt.Net
             {
                 throw new ArgumentException("Invalid maximum bytes value", nameof(maximumBytes));
             }
-
+#if HAS_SPAN_RNG
+            Span<byte> result = outBuffer;
+#else
             byte[] result = new byte[maximumBytes];
-
+#endif
             int position = 0;
             while (position < sourceLength - 1 && outputLength < maximumBytes)
             {
@@ -137,8 +150,9 @@ namespace BCrypt.Net
 
                 ++outputLength;
             }
-
+#if !HAS_SPAN_RNG
             return result;
+#endif
         }
 
         /// <summary>
