@@ -377,7 +377,7 @@ namespace BCrypt.Net.UnitTests
                 for (int j = 0; j < _testVectors.Length / 3; j++)
                 {
                     string plain = _testVectors[j, 0];
-                    string salt = BCrypt.GenerateSalt(i);
+                    string salt = SaltGenerator.GenerateSalt(i);
                     string hashed1 = BCrypt.HashPassword(plain, salt);
                     string hashed2 = BCrypt.HashPassword(plain, hashed1);
                     Assert.Equal(hashed1, hashed2);
@@ -394,7 +394,7 @@ namespace BCrypt.Net.UnitTests
             for (int j = 0; j < _testVectors.Length / 3; j++)
             {
                 string plain = _testVectors[j, 0];
-                string salt = BCrypt.GenerateSalt(31);
+                string salt = SaltGenerator.GenerateSalt(31);
                 string hashed1 = BCrypt.HashPassword(plain, salt);
                 string hashed2 = BCrypt.HashPassword(plain, hashed1);
                 Assert.Equal(hashed1, hashed2);
@@ -553,7 +553,7 @@ namespace BCrypt.Net.UnitTests
             var passA = SafeUTF8.GetBytes("\0 password");
             var passB = SafeUTF8.GetBytes("\0");
 
-            byte[] saltBytes = BCrypt.DecodeBase64(extractedSalt, 128 / 8);
+            byte[] saltBytes = Base64.DecodeBase64(extractedSalt, 128 / 8);
 
             var bytesAreValid = BytesAreValid(passA);
             Assert.False(bytesAreValid, "Hash contains null bytes");
@@ -579,7 +579,7 @@ namespace BCrypt.Net.UnitTests
             var passA = SafeUTF8.GetBytes("d27a37");
             var passB = new byte[] { 0 };
 
-            byte[] saltBytes = BCrypt.DecodeBase64(extractedSalt, 128 / 8);
+            byte[] saltBytes = Base64.DecodeBase64(extractedSalt, 128 / 8);
 
             byte[] enhancedBytes = SHA384.Create().ComputeHash(passA);
             byte[] enhancedBytesB = SHA384.Create().ComputeHash(passB);
