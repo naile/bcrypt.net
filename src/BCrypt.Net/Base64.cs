@@ -16,8 +16,7 @@ namespace BCrypt.Net
         /// <param name="byteArray">The byte array to encode.</param>
         /// <param name="length">   The number of bytes to encode.</param>
         /// <param name="outBuffer">The output buffer</param>
-        /// <param name="pos"></param>
-        /// <param name="charsWritten"></param>
+        /// <param name="pos">position in outBuffer to start writing from</param>
         /// <returns>Base64-encoded string.</returns>
         public static void EncodeBase64(Span<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
         {
