@@ -736,10 +736,8 @@ namespace BCrypt.Net
             saltBuffer[pos++] = '2';
             saltBuffer[pos++] = bcryptMinorRevision;
             saltBuffer[pos++] = '$';
-            foreach (var @char in workFactor.ToString("D2"))
-            {
-                saltBuffer[pos++] = @char;
-            }
+            saltBuffer[pos++] = (char)((workFactor / 10) + '0');
+            saltBuffer[pos++] = (char)((workFactor % 10) + '0');
             saltBuffer[pos++] = '$';
             WriteBase64Salt(saltBuffer, pos);
             return new string(saltBuffer);
