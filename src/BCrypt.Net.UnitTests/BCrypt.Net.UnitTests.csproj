@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>BCrypt.Net.UnitTests</AssemblyName>
     <PackageId>BCrypt.Net.UnitTests</PackageId>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>net5.0;netcoreapp3.1;net452</TargetFrameworks>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
