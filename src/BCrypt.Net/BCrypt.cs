@@ -730,20 +730,39 @@ namespace BCrypt.Net
             }
 
 #if HAS_SPAN_RNG
-            Span<byte> saltBytes = stackalloc byte[BCryptSaltLen];
-            RandomNumberGenerator.Fill(saltBytes);
+            Span<char> saltBuffer = stackalloc char[29];
+            var pos = 0;
+            saltBuffer[pos++] = '$';
+            saltBuffer[pos++] = '2';
+            saltBuffer[pos++] = bcryptMinorRevision;
+            saltBuffer[pos++] = '$';
+            foreach (var @char in workFactor.ToString("D2"))
+            {
+                saltBuffer[pos++] = @char;
+            }
+            saltBuffer[pos++] = '$';
+            WriteBase64Salt(saltBuffer, pos);
+            return new string(saltBuffer);
 #else
             byte[] saltBytes = new byte[BCryptSaltLen];
             RngCsp.GetBytes(saltBytes);
-#endif
-
             var result = new StringBuilder(29);
             result.Append("$2").Append(bcryptMinorRevision).Append('$').Append(workFactor.ToString("D2")).Append('$');
             result.Append(EncodeBase64(saltBytes, saltBytes.Length));
 
             return result.ToString();
+#endif
+
         }
 
+#if HAS_SPAN_RNG
+        private static void WriteBase64Salt(Span<char> outBuffer, int pos)
+        {
+            Span<byte> saltBytes = stackalloc byte[BCryptSaltLen];
+            RandomNumberGenerator.Fill(saltBytes);
+            EncodeBase64(saltBytes, saltBytes.Length, outBuffer, pos);
+        }
+#endif
 
         /// <summary>
         /// Based on password_needs_rehash in PHP this method will return true
@@ -835,6 +854,57 @@ namespace BCrypt.Net
             return diff == 0;
         }
 
+#if HAS_SPAN
+        /// <summary>
+        ///  Encode a byte array using BCrypt's slightly-modified base64 encoding scheme. Note that this
+        ///  is *not* compatible with the standard MIME-base64 encoding.
+        /// </summary>
+        /// <exception cref="ArgumentException">Thrown when one or more arguments have unsupported or
+        ///                                     illegal values.</exception>
+        /// <param name="byteArray">The byte array to encode.</param>
+        /// <param name="length">   The number of bytes to encode.</param>
+        /// <param name="outBuffer">The output buffer</param>
+        /// <param name="pos"></param>
+        /// <param name="charsWritten"></param>
+        /// <returns>Base64-encoded string.</returns>
+        private static void EncodeBase64(Span<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
+        {
+            if (length <= 0 || length > byteArray.Length)
+            {
+                throw new ArgumentException("Invalid length", nameof(length));
+            }
+
+            Span<char> encoded = outBuffer;
+
+            int off = 0;
+            while (off < length)
+            {
+                int c1 = byteArray[off++] & 0xff;
+                encoded[pos++] = Base64Code[(c1 >> 2) & 0x3f];
+                c1 = (c1 & 0x03) << 4;
+                if (off >= length)
+                {
+                    encoded[pos++] = Base64Code[c1 & 0x3f];
+                    break;
+                }
+
+                int c2 = byteArray[off++] & 0xff;
+                c1 |= (c2 >> 4) & 0x0f;
+                encoded[pos++] = Base64Code[c1 & 0x3f];
+                c1 = (c2 & 0x0f) << 2;
+                if (off >= length)
+                {
+                    encoded[pos++] = Base64Code[c1 & 0x3f];
+                    break;
+                }
+
+                c2 = byteArray[off++] & 0xff;
+                c1 |= (c2 >> 6) & 0x03;
+                encoded[pos++] = Base64Code[c1 & 0x3f];
+                encoded[pos++] = Base64Code[c2 & 0x3f];
+            }
+        }
+#endif
 
         /// <summary>
         ///  Encode a byte array using BCrypt's slightly-modified base64 encoding scheme. Note that this
