@@ -20,40 +20,7 @@ namespace BCrypt.Net
         /// <returns>Base64-encoded string.</returns>
         public static void EncodeBase64(Span<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
         {
-            if (length <= 0 || length > byteArray.Length)
-            {
-                throw new ArgumentException("Invalid length", nameof(length));
-            }
-
-            Span<char> encoded = outBuffer;
-
-            int off = 0;
-            while (off < length)
-            {
-                int c1 = byteArray[off++] & 0xff;
-                encoded[pos++] = Base64Code[(c1 >> 2) & 0x3f];
-                c1 = (c1 & 0x03) << 4;
-                if (off >= length)
-                {
-                    encoded[pos++] = Base64Code[c1 & 0x3f];
-                    break;
-                }
-
-                int c2 = byteArray[off++] & 0xff;
-                c1 |= (c2 >> 4) & 0x0f;
-                encoded[pos++] = Base64Code[c1 & 0x3f];
-                c1 = (c2 & 0x0f) << 2;
-                if (off >= length)
-                {
-                    encoded[pos++] = Base64Code[c1 & 0x3f];
-                    break;
-                }
-
-                c2 = byteArray[off++] & 0xff;
-                c1 |= (c2 >> 6) & 0x03;
-                encoded[pos++] = Base64Code[c1 & 0x3f];
-                encoded[pos++] = Base64Code[c2 & 0x3f];
-            }
+            WriteToBuffer(byteArray, length, outBuffer, pos);
         }
 #endif
 
@@ -66,10 +33,20 @@ namespace BCrypt.Net
         /// <param name="byteArray">The byte array to encode.</param>
         /// <param name="length">   The number of bytes to encode.</param>
         /// <returns>Base64-encoded string.</returns>
-#if HAS_SPAN
-        public static char[] EncodeBase64(Span<byte> byteArray, int length)
-#else
         public static char[] EncodeBase64(byte[] byteArray, int length)
+        {
+            int encodedSize = (int)Math.Ceiling((length * 4D) / 3);
+            char[] encoded = new char[encodedSize];
+
+            WriteToBuffer(byteArray, length, encoded);
+
+            return encoded;
+        }
+
+#if HAS_SPAN
+        private static void WriteToBuffer(Span<byte> byteArray, int length, Span<char> outBuffer, int pos = 0)
+#else
+        private static void WriteToBuffer(byte[] byteArray, int length, char[] outBuffer, int pos = 0)
 #endif
         {
             if (length <= 0 || length > byteArray.Length)
@@ -77,39 +54,33 @@ namespace BCrypt.Net
                 throw new ArgumentException("Invalid length", nameof(length));
             }
 
-            int encodedSize = (int)Math.Ceiling((length * 4D) / 3);
-            char[] encoded = new char[encodedSize];
-
-            int pos = 0;
             int off = 0;
             while (off < length)
             {
                 int c1 = byteArray[off++] & 0xff;
-                encoded[pos++] = Base64Code[(c1 >> 2) & 0x3f];
+                outBuffer[pos++] = Base64Code[(c1 >> 2) & 0x3f];
                 c1 = (c1 & 0x03) << 4;
                 if (off >= length)
                 {
-                    encoded[pos++] = Base64Code[c1 & 0x3f];
+                    outBuffer[pos++] = Base64Code[c1 & 0x3f];
                     break;
                 }
 
                 int c2 = byteArray[off++] & 0xff;
                 c1 |= (c2 >> 4) & 0x0f;
-                encoded[pos++] = Base64Code[c1 & 0x3f];
+                outBuffer[pos++] = Base64Code[c1 & 0x3f];
                 c1 = (c2 & 0x0f) << 2;
                 if (off >= length)
                 {
-                    encoded[pos++] = Base64Code[c1 & 0x3f];
+                    outBuffer[pos++] = Base64Code[c1 & 0x3f];
                     break;
                 }
 
                 c2 = byteArray[off++] & 0xff;
                 c1 |= (c2 >> 6) & 0x03;
-                encoded[pos++] = Base64Code[c1 & 0x3f];
-                encoded[pos++] = Base64Code[c2 & 0x3f];
+                outBuffer[pos++] = Base64Code[c1 & 0x3f];
+                outBuffer[pos++] = Base64Code[c2 & 0x3f];
             }
-
-            return encoded;
         }
 
         /// <summary>
