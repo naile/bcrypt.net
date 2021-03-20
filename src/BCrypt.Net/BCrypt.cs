@@ -678,7 +678,15 @@ namespace BCrypt.Net
                     break;
                 case HashType.SHA384:
                     using (var sha = SHA384.Create())
+                    {
+#if HAS_SPAN_RNG
+                        Span<byte> buffer = stackalloc byte[48];
+                        sha.TryComputeHash(inputBytes, buffer, out _);
+                        inputBytes = SafeUTF8.GetBytes(Convert.ToBase64String(buffer) + (bcryptMinorRevision >= 'a' ? Nul : EmptyString));
+#else
                         inputBytes = SafeUTF8.GetBytes(Convert.ToBase64String(sha.ComputeHash(inputBytes)) + (bcryptMinorRevision >= 'a' ? Nul : EmptyString));
+#endif
+                    }
                     break;
                 case HashType.SHA512:
                     using (var sha = SHA512.Create())
